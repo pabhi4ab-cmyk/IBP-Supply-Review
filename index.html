@@ -23,7 +23,7 @@ select:focus{outline:2px solid var(--gold);outline-offset:1px}
 .sec{font-size:11px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);margin:32px 2px 0;display:flex;align-items:center;gap:14px}.sec::after{content:"";flex:1;height:1px;background:var(--bd)}
 h2{font:600 12.5px Inter,"Segoe UI",Helvetica,Arial,sans-serif;letter-spacing:.07em;text-transform:uppercase;color:var(--h2);margin:0 0 10px}
 .sub{color:var(--mut);font-size:11px;font-weight:400;letter-spacing:0;text-transform:none}
-.kp{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-top:16px}@media(min-width:1200px){.kp{grid-template-columns:repeat(6,minmax(0,1fr))}}
+.kp{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-top:16px}@media(min-width:1200px){.kp{grid-template-columns:repeat(7,minmax(0,1fr))}}
 .k{background:var(--card);border:1px solid var(--bd);border-top:3px solid var(--h2);border-radius:10px;padding:12px 12px 10px;box-shadow:var(--sh)}
 .k span{display:block;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .k b{display:block;font:500 24px/1.25 "Playfair Display",Georgia,serif;color:var(--fg);white-space:nowrap;margin-top:4px}
@@ -70,7 +70,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 input[type=range]{min-width:240px;padding:0;accent-color:#B8975A;border:none;background:none}
 .ub{transform-origin:left;animation:gw 1.1s cubic-bezier(.2,.7,.2,1) both}@keyframes gw{from{transform:scaleX(0)}}
 .sk path{animation:fi 1.2s ease both}
-#ct th,#st th{position:sticky;top:0;z-index:1}.tw{font-size:12px;color:var(--mut);margin:0 0 10px}
+#ct th,#gt th{position:sticky;top:0;z-index:1}.tw{font-size:12px;color:var(--mut);margin:0 0 10px}
 @media print{body::before,.tabs,.tool,.hb{display:none}.panel{display:block!important}.rv,.k,.tile,.hl{opacity:1!important;transform:none!important;animation:none!important}.card{break-inside:avoid;box-shadow:none}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
 .pr .panel{display:block}.pr .rv{opacity:1;transform:none}.pr .tabs,.pr .tool,.pr .hb{display:none}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.rv{opacity:1;transform:none}.sp polyline{stroke-dashoffset:0}}
@@ -93,6 +93,7 @@ input[type=range]{min-width:240px;padding:0;accent-color:#B8975A;border:none;bac
 <div class="sec"><i data-ic="factory"></i>Capacity</div>
 <div class="g4"><div class="card rv"><h2>Demand, plan and capacity by plant <span class="sub">MT per month</span></h2><div class="cv"><canvas id="c4"></canvas></div></div>
 <div class="card rv"><h2>Production plan stability by plant <span class="sub">average month-to-month change · red &gt;15% · amber 7–15%</span></h2><div class="cv"><canvas id="c9"></canvas></div></div></div>
+<div class="card rv"><h2><i data-ic="factory"></i>Product group capacity view <span class="sub">pan-India, plants pooled · 95%+ average utilization = constrained</span></h2><div class="sc" style="max-height:460px"><table id="gt"></table></div></div>
 <div class="card rv"><h2><i data-ic="alert"></i>Constraint tracker <span class="sub">lines at 95%+ utilization or with demand above capacity</span></h2><div class="sc" style="max-height:460px"><table id="ct"></table></div></div>
 <div class="card rv"><h2>Plant scorecard <span class="sub">click a plant to drill down</span></h2><div class="sc"><table id="pt"></table></div></div>
 <div class="card rv"><h2>Most variable production lines <span class="sub">average month-to-month change as % of average production</span></h2><div class="sc"><table id="vt"></table></div></div>
@@ -121,7 +122,6 @@ const MN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec
 const ML=M.map(m=>{const[y,o]=m.split('-');return MN[+o-1]+' '+y.slice(2)});
 const S={tab:'ov',plant:'All',cat:'All',grp:'All',from:0,to:N-1,metric:'util',line:null};
 const sum=a=>a.reduce((x,y)=>x+y,0);
-const isTgt=t=>t.grp==='COLUMN LOW DIA PIPE';
 const pick=(plant,line)=>T.filter(t=>(plant==='All'||t.plant===plant)&&(S.cat==='All'||t.cat===S.cat)&&(S.grp==='All'||t.grp===S.grp)&&(line==null||t.id===line));
 const agg=(ts,k)=>{const r=new Array(N).fill(0);ts.forEach(t=>t[k].forEach((v,i)=>r[i]+=v));return r};
 /* Line DIO = closing stock / average(next 3 months demand) x 30 (months past the horizon repeat the last month's demand, as in the workbook). Scope DIO = simple average of the line DIOs in scope. */
@@ -130,7 +130,7 @@ const sl=a=>a.slice(S.from,S.to+1),avg=a=>sum(sl(a))/sl(a).length,rt=(a,b)=>sum(
 function stats(ts){const d=agg(ts,'d'),s=agg(ts,'s'),c=agg(ts,'c'),p=agg(ts,'p'),ci=agg(ts,'ci'),rc=agg(ts,'rc');
 const u=sl(p).map((v,i)=>sl(c)[i]>0?v/sl(c)[i]:null).filter(v=>v!==null);
 const ld=ts.map(t=>dio(t.ci,t.d)),lr=ts.map(t=>dio(t.rc,t.d)),mn=a=>Array.from({length:N},(_,i)=>a.length?sum(a.map(x=>x[i]))/a.length:0);
-return{d,s,c,p,ci,rc,td:mn(ld),rd:mn(lr),util:rt(p,c),load:rt(d,c),fill:rt(s,d),unmet:sum(sl(d))-sum(sl(s)),peak:u.length?Math.max(...u):NaN,hotm:u.filter(v=>v>=.95).length,hot:ts.filter(t=>!isTgt(t)&&sum(sl(t.c))>0&&rt(t.p,t.c)>=.95).length,nl:ts.filter(t=>!isTgt(t)).length}}
+return{d,s,c,p,ci,rc,td:mn(ld),rd:mn(lr),util:rt(p,c),load:rt(d,c),fill:rt(s,d),unmet:sum(sl(d))-sum(sl(s)),peak:u.length?Math.max(...u):NaN,hotm:u.filter(v=>v>=.95).length,hot:ts.filter(t=>sum(sl(t.c))>0&&rt(t.p,t.c)>=.95).length,nl:ts.length}}
 const FL=D.flows,sumTo=(a,k)=>a.reduce((x,y)=>x+y[k],0);
 const outAll=T.map(()=>new Array(N).fill(0));FL.forEach(f=>{if(f.fl!=null)f.v.forEach((x,i)=>outAll[f.fl][i]+=x)});
 function flowsSel(){return FL.filter(f=>(S.cat==='All'||f.cat===S.cat)&&(S.grp==='All'||f.grp===S.grp)&&(S.plant==='All'||f.fp===S.plant||f.tp===S.plant)).map(f=>{const v=sl(f.v),tot=sum(v),g=f.fl==null?null:sum(sl(T[f.fl].d))+sum(sl(outAll[f.fl]));
@@ -140,16 +140,19 @@ return Object.keys(gk).map(k=>{const ls=gk[k],A=key=>agg(ls,key),d=A('d'),c=A('c
 if(m==='util'){v=c.map((x,i)=>x>0?p[i]/x:null);kc=v}else if(m==='load'){v=c.map((x,i)=>x>0?d[i]/x:null);kc=v}
 else{const key=m==='rdio'?'rc':'ci',ds=ls.map(t=>dio(t[key],t.d)),mn=Array.from({length:N},(_,i)=>sum(ds.map(x=>x[i]))/ls.length);v=m==='inv'?A('ci'):mn;kc=m==='inv'?Array.from({length:N},(_,i)=>sum(ls.map(t=>dio(t.ci,t.d)[i]))/ls.length):mn}
 const a=sl(v).filter(z=>z!==null);return{k,n:ls.length,v,kc,a:a.length?sum(a)/a.length:0}}).sort((x,y)=>y.a-x.a)}
-function constraints(ts){return ts.map(t=>{let hm=0,ov=0,bl=0,first=-1,cur=0,best=0;for(let i=S.from;i<=S.to;i++){const c=t.c[i],d=t.d[i];if(c>0&&t.p[i]/c>=.95)hm++;if(c>0&&t.p[i]/c<.995)bl++;if(d>c+.5){ov++;if(first<0)first=i}cur=Math.max(0,cur+d-c);if(cur>best)best=cur}
-return{t,hm,ov,bl,first,pre:best,u:rt(t.p,t.c)}}).filter(r=>r.hm>0||r.ov>0).sort((a,b)=>b.hm-a.hm||(b.u||0)-(a.u||0))}
+function constraints(ts){return ts.map(t=>{let hm=0,ov=0,first=-1,cur=0,best=0;for(let i=S.from;i<=S.to;i++){const c=t.c[i],d=t.d[i];if(c>0&&t.p[i]/c>=.95)hm++;if(d>c+.5){ov++;if(first<0)first=i}cur=Math.max(0,cur+d-c);if(cur>best)best=cur}
+return{t,hm,ov,first,pre:best,u:rt(t.p,t.c)}}).filter(r=>r.hm>0||r.ov>0).sort((a,b)=>b.hm-a.hm||(b.u||0)-(a.u||0))}
 function volat(ts){return ts.map(t=>{const p=sl(t.p),n=p.length;let ch=0,mxs=0,mi=S.from;for(let i=1;i<n;i++){const x=Math.abs(p[i]-p[i-1]);ch+=x;if(x>mxs){mxs=x;mi=S.from+i}}const m=sum(p)/n;return{t,m,ch,idx:n>1&&m>0?ch/(n-1)/m:0,mxs,mi}}).filter(r=>r.m>0).sort((a,b)=>b.idx-a.idx)}
+function groupCap(ts){const g={};ts.forEach(t=>{const k=t.grp+' · '+t.cat;(g[k]=g[k]||[]).push(t)});
+return Object.keys(g).map(k=>{const ls=g[k],d=agg(ls,'d'),c=agg(ls,'c'),p=agg(ls,'p');let hm=0,ov=0,cur=0,best=0;for(let i=S.from;i<=S.to;i++){if(c[i]>0&&p[i]/c[i]>=.95)hm++;if(d[i]>c[i]+.5)ov++;cur=Math.max(0,cur+d[i]-c[i]);if(cur>best)best=cur}
+const ri=sum(ls.map(t=>t.ri)),dm=sum(sl(d))/sl(d).length;return{k,n:ls.length,u:rt(p,c),ld:rt(d,c),hm,ov,pre:best,ri,rid:dm>0?ri/dm*30:0}}).sort((a,b)=>(b.u||0)-(a.u||0))}
 /*END_LOGIC*/
 const $=i=>document.getElementById(i);
 const f0=v=>isFinite(v)?Math.round(v).toLocaleString('en-IN'):'–',pc=v=>isFinite(v)?Math.round(v*100)+'%':'–';
 const fill=(id,arr,sel)=>{$(id).innerHTML=arr.map((x,i)=>`<option value="${sel?x:i}">${x}</option>`).join('')};
 fill('plant',['All',...PLANTS],1);fill('cat',['All',...CATS],1);fill('grp',['All',...GROUPS],1);fill('from',ML);fill('to',ML);$('to').value=N-1;
 const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
-Chart.defaults.color=css('--mut');Chart.defaults.font.size=11;Chart.defaults.animation={duration:1100,easing:'easeOutQuart'};Chart.defaults.font.family='Inter,"Segoe UI",Helvetica,Arial,sans-serif';Chart.defaults.borderColor='rgba(128,128,128,.16)';Chart.defaults.plugins.legend.labels.usePointStyle=true;Chart.defaults.plugins.legend.labels.boxWidth=8;Chart.defaults.plugins.tooltip.backgroundColor='#0F2540';Chart.defaults.plugins.tooltip.padding=10;Chart.defaults.plugins.tooltip.cornerRadius=6;const iv=(c)=>c.chart.options.indexAxis==='y'?c.parsed.x:c.parsed.y;Chart.defaults.plugins.tooltip.callbacks.label=c=>{const v=iv(c);return ' '+c.dataset.label+': '+(v==null?'–':Math.round(v).toLocaleString('en-IN'))};
+Chart.defaults.color=css('--mut');Chart.defaults.font.size=11;Chart.defaults.animation.duration=1100;Chart.defaults.animation.easing='easeOutQuart';Chart.defaults.font.family='Inter,"Segoe UI",Helvetica,Arial,sans-serif';Chart.defaults.borderColor='rgba(128,128,128,.16)';Chart.defaults.plugins.legend.labels.usePointStyle=true;Chart.defaults.plugins.legend.labels.boxWidth=8;Chart.defaults.plugins.tooltip.backgroundColor='#0F2540';Chart.defaults.plugins.tooltip.padding=10;Chart.defaults.plugins.tooltip.cornerRadius=6;const iv=(c)=>c.chart.options.indexAxis==='y'?c.parsed.x:c.parsed.y;Chart.defaults.plugins.tooltip.callbacks.label=c=>{const v=iv(c);return ' '+c.dataset.label+': '+(v==null?'–':Math.round(v).toLocaleString('en-IN'))};
 if(Chart.defaults.scales&&Chart.defaults.scales.linear)Chart.defaults.scales.linear.ticks.precision=0;
 const ln=(l,d,c,x={})=>Object.assign({label:l,data:d,borderColor:c,backgroundColor:c,borderWidth:2,pointRadius:0,tension:.2},x);
 const O={maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'bottom'}}};
@@ -190,7 +193,8 @@ const ts=pick(S.plant,S.line),st=stats(ts),L=sl(ML);
 $('chip').innerHTML=S.line!=null?`<span class="chip" onclick="S.line=null;render()">Line: ${T[S.line].lab} · ${T[S.line].grp} ✕</span>`:'';
 const mths=sl(ML).length;
 const ratio=(a,b)=>sl(a).map((x,i)=>sl(b)[i]>0?x/sl(b)[i]:null),uc=u=>u>=.95?Rd:u>=.9?A:G,rdc=v=>v<15?Rd:v<25?A:v<=45?G:A;
-const k=[['Utilization',pc(st.util),'Required production ÷ capacity',uc(st.util),Math.round(st.util*100),'%',ratio(st.p,st.c)],['Demand ÷ capacity',pc(st.load),'Demand ÷ capacity',uc(st.load),Math.round(st.load*100),'%',ratio(st.d,st.c)],['Fill rate',pc(st.fill),'Supply ÷ demand',st.fill>=.995?G:st.fill>=.97?A:Rd,Math.round(st.fill*100),'%',ratio(st.s,st.d)],['Unmet demand',f0(st.unmet)+' MT','Demand minus supply',st.unmet>0.5?Rd:G,Math.round(st.unmet),' MT',sl(st.d).map((x,i)=>x-sl(st.s)[i])],['Months ≥95%',st.hotm+' of '+mths,'Months with utilization at or above 95%',st.hotm===0?G:st.hotm<=6?A:Rd,null,'',null],['Lines ≥95%',st.hot+' / '+st.nl,'Lines with utilization at or above 95% (Column Low Dia excluded: planned at 100%)',st.nl&&st.hot/st.nl>=.5?Rd:st.nl&&st.hot/st.nl>=.25?A:G,null,'',null]];
+const gcap=groupCap(ts),gcons=gcap.filter(r=>r.u>=.95);
+const k=[['Utilization',pc(st.util),'Required production ÷ capacity',uc(st.util),Math.round(st.util*100),'%',ratio(st.p,st.c)],['Demand ÷ capacity',pc(st.load),'Demand ÷ capacity',uc(st.load),Math.round(st.load*100),'%',ratio(st.d,st.c)],['Fill rate',pc(st.fill),'Supply ÷ demand',st.fill>=.995?G:st.fill>=.97?A:Rd,Math.round(st.fill*100),'%',ratio(st.s,st.d)],['Unmet demand',f0(st.unmet)+' MT','Demand minus supply',st.unmet>0.5?Rd:G,Math.round(st.unmet),' MT',sl(st.d).map((x,i)=>x-sl(st.s)[i])],['Months ≥95%',st.hotm+' of '+mths,'Months with utilization at or above 95%',st.hotm===0?G:st.hotm<=6?A:Rd,null,'',null],['Lines ≥95%',st.hot+' / '+ts.length,'Lines with utilization at or above 95%',ts.length&&st.hot/ts.length>=.5?Rd:ts.length&&st.hot/ts.length>=.25?A:G,null,'',null],['Groups ≥95%',gcons.length+' / '+gcap.length,'Product groups (pan-India, plants pooled) with utilization at or above 95%',gcap.length&&gcons.length>=gcap.length/3?Rd:gcons.length?A:G,null,'',null]];
 $('kp').innerHTML=k.map((x,i)=>`<div class="k" style="animation-delay:${i*60}ms" title="${x[2]}"><span><i class="dot" style="background:${x[3]}"></i>${x[0]}</span><b${x[4]!==null?` data-n="${x[4]}" data-s="${x[5]}"`:''}>${x[1]}</b>${x[6]?sp(x[6],x[3]):''}</div>`).join('');
 c1.data.labels=L;c1.data.datasets=[ln('Demand',sl(st.d),'#1F3A5F'),ln('Supply',sl(st.s),'#2A9D8F',{borderDash:[5,4]}),ln('Required production',sl(st.p),'#C9A227'),ln('Capacity',sl(st.c),'#9B2C2C',{stepped:true})];c1.update();
 const rows=PLANTS.map(s=>{const t=pick(s);return{s,x:stats(t),n:t.length}}).filter(r=>r.n&&isFinite(r.x.util));rows.sort((a,b)=>b.x.util-a.x.util);
@@ -214,17 +218,21 @@ const CH=[c1,c3,c4,c6,c9],RM=matchMedia('(prefers-reduced-motion:reduce)').match
 function animate(){document.querySelectorAll('[data-n]').forEach(el=>{const n=+el.dataset.n,s=el.dataset.s||'',fm=v=>Math.round(v).toLocaleString('en-IN')+s;if(RM||!isFinite(n)){el.textContent=fm(n);return}const t0=performance.now(),step=t=>{const q=Math.min(1,(t-t0)/1000);el.textContent=fm(n*(1-Math.pow(1-q,3)));if(q<1)requestAnimationFrame(step)};requestAnimationFrame(step)});
 requestAnimationFrame(()=>requestAnimationFrame(()=>document.querySelectorAll('.fg[data-off]').forEach(e=>{e.style.strokeDashoffset=e.dataset.off})))}
 function renderExtra(ts,st,rows,L){
-const fsA=flowsSel(),net=sum(sl(agg(pick('All'),'d'))),mv=sum(fsA.map(f=>f.tot)),sh=st.nl?st.hot/st.nl:0,R=(c,e,t)=>({c,e,t});
-const cap=sh>=.5?R('r','🔴','High'):sh>=.1?R('a','🟡','Moderate'):R('g','🟢','Low'),svc=st.fill>=.995?R('g','🟢','On target'):st.fill>=.97?R('a','🟡','Watch'):R('r','🔴','At risk');
-const H=[[cap,'Capacity risk',`${st.hot} of ${st.nl} Category-Plant combo at 95%+ utilization`],[svc,'Service level',`Fill rate ${pc(st.fill)} · ${f0(st.unmet)} MT unmet`],[R('n','🔁',f0(mv)+' MT'),'Demand transferred',`${pc(mv/net)} of network demand`]];
+const fsA=flowsSel(),net=sum(sl(agg(pick('All'),'d'))),mv=sum(fsA.map(f=>f.tot)),gc0=groupCap(ts),cons=gc0.filter(r=>r.u>=.95),R=(c,e,t)=>({c,e,t});
+const cap=gc0.length&&cons.length>=gc0.length/3?R('r','🔴','High'):cons.length>=1?R('a','🟡','Moderate'):R('g','🟢','Low'),svc=st.fill>=.995?R('g','🟢','On target'):st.fill>=.97?R('a','🟡','Watch'):R('r','🔴','At risk');
+const H=[[cap,'Capacity risk',`${cons.length} of ${gc0.length} product groups at 95%+ pan-India utilization`],[svc,'Service level',`Fill rate ${pc(st.fill)} · ${f0(st.unmet)} MT unmet`],[R('n','🔁',f0(mv)+' MT'),'Demand transferred',`${pc(mv/net)} of network demand`]];
 $('hs').innerHTML=H.map((x,i)=>`<div class="hl ${x[0].c}" style="animation-delay:${i*80}ms"><span class="em">${x[0].e}</span><div><span class="lb">${x[1]}</span><b>${x[0].t}</b><span class="ds">${x[2]}</span></div></div>`).join('');
-const cr=constraints(pick(S.plant)),sx=r=>isTgt(r.t)?(r.bl===0?'🎯 At 100% target':`🎯 Below 100% in ${r.bl} month${r.bl>1?'s':''}`):r.pre<=0?'🟢 Within capacity':r.pre<=r.t.ri?'🟡 Covered by stock':'🔴 Needs pre-build';
+const gcv=groupCap(ts);
+$('gt').innerHTML='<tr><th>Product group · category</th><th>Lines</th><th>Avg utilization</th><th>Demand ÷ capacity</th><th>Months ≥95%</th><th>Months demand &gt; capacity</th><th>Peak pre-build MT</th><th>Opening relevant stock MT (days)</th><th>Status</th></tr>'+gcv.map(r=>`<tr><td>${r.k}</td><td>${r.n}</td><td>${pc(r.u)}</td><td>${pc(r.ld)}</td><td>${r.hm}</td><td>${r.ov}</td><td>${f0(r.pre)}</td><td>${f0(r.ri)} (${f0(r.rid)} d)</td><td style="text-align:left">${r.u>=.95?'🔴 Constrained':r.u>=.9?'🟡 Tight':'🟢 Headroom'}</td></tr>`).join('');
+const cr=constraints(pick(S.plant)),sx=r=>r.pre<=0?'🟢 Within capacity':r.pre<=r.t.ri?'🟡 Covered by stock':'🔴 Needs pre-build';
 $('ct').innerHTML='<tr><th>Line</th><th>Avg utilization</th><th>Months ≥95%</th><th>Months demand &gt; capacity</th><th>First month demand &gt; capacity</th><th>Peak pre-build MT</th><th>Opening relevant stock MT</th><th>Status</th></tr>'+(cr.length?cr.map(r=>`<tr><td>${r.t.lab} · ${r.t.grp}</td><td>${pc(r.u)}</td><td>${r.hm}</td><td>${r.ov}</td><td>${r.first<0?'–':ML[r.first]}</td><td>${f0(r.pre)}</td><td>${f0(r.t.ri)}</td><td style="text-align:left">${sx(r)}</td></tr>`).join(''):'<tr><td>No lines at 95%+ utilization in this selection</td></tr>');
 const n=sl(ML).length,pv=PLANTS.map(s=>{const v=volat(pick(s));return v.length&&n>1?{s,i:sum(v.map(r=>r.ch))/(n-1)/sum(v.map(r=>r.m))}:null}).filter(Boolean).sort((a,b)=>b.i-a.i);
 c9.data.labels=pv.map(r=>r.s);c9.data.datasets=[{label:'Avg monthly change',data:pv.map(r=>r.i*100),backgroundColor:pv.map(r=>r.i>.15?'#C0504D':r.i>.07?'#C9A227':'#2A9D8F')}];c9.update();
 $('vt').innerHTML='<tr><th>Line</th><th>Avg production / month</th><th>Avg monthly change</th><th>Largest swing MT</th><th>Month</th><th>Production trend</th></tr>'+volat(pick(S.plant)).slice(0,12).map(r=>`<tr><td>${r.t.lab} · ${r.t.grp}</td><td>${f0(r.m)}</td><td>${pc(r.idx)}</td><td>${f0(r.mxs)}</td><td>${ML[r.mi]}</td><td style="width:110px">${sp(sl(r.t.p),'#1F3A5F')}</td></tr>`).join('');
 animate()}
-document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{S.tab=b.dataset.t;document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('on',x===b));document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('on',p.id==='p-'+S.tab));setTimeout(()=>CH.forEach(c=>c.resize()),60);animate()});
+const fixCharts=()=>CH.forEach(c=>{if(c.canvas&&c.canvas.offsetParent!==null){c.resize();c.update('none')}});
+document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{S.tab=b.dataset.t;document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('on',x===b));document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('on',p.id==='p-'+S.tab));document.querySelectorAll('#p-'+S.tab+' .rv').forEach(el=>el.classList.add('in'));requestAnimationFrame(fixCharts);setTimeout(fixCharts,150);setTimeout(fixCharts,700);animate()});
+if(typeof ResizeObserver!=='undefined')CH.forEach(c=>{if(c.canvas&&c.canvas.parentElement)new ResizeObserver(()=>{if(c.canvas.offsetParent!==null){c.resize();c.update('none')}}).observe(c.canvas.parentElement)});
 $('thm').onclick=()=>{const d=document.documentElement,dk=d.dataset.theme==='dark'||(!d.dataset.theme&&matchMedia('(prefers-color-scheme:dark)').matches);d.dataset.theme=dk?'light':'dark';Chart.defaults.color=css('--mut');render()};
 const pr=()=>{document.body.classList.add('pr');CH.forEach(c=>c.resize())},unpr=()=>{document.body.classList.remove('pr');CH.forEach(c=>c.resize())};
 $('pdf').onclick=()=>{pr();setTimeout(()=>{try{window.print()}catch(e){}unpr()},450)};addEventListener('beforeprint',pr);addEventListener('afterprint',unpr);
